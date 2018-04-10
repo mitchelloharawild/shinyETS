@@ -44,7 +44,7 @@ server <- function(input, output, session) {
       return(NULL)
     }
     sliderInput("state_len", label = "State slider",
-                min = frequency(fit$x), max = NROW(fit$states), value = frequency(fit$x), step=1,
+                min = pmax(3, frequency(fit$x)), max = NROW(fit$states), value = frequency(fit$x), step=1,
                 animate = TRUE)
   })
   
@@ -104,7 +104,7 @@ server <- function(input, output, session) {
         mutate(t = row_number(),
                yhat = c(NA, fitted(fit)[seq_len(NROW(fit$states) - 1)])) %>% 
         select(t, everything()) %>%
-        tail(frequency(fit$x))
+        tail(pmax(3, frequency(fit$x)))
     }
   })
 }
