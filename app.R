@@ -86,6 +86,7 @@ server <- function(input, output, session) {
     }
     if(!is.null(input$state_len)){
       fit$states <- head(fit$states, input$state_len)
+      fit$x <- head(fit$x, input$state_len)
     }
     fit
   })
