@@ -10,6 +10,7 @@
 library(shiny)
 library(rlang)
 library(purrr)
+library(tidyverse)
 library(fpp2)
 
 # Define UI for application that draws a histogram
@@ -22,7 +23,8 @@ ui <- fluidPage(
    sidebarLayout(
       sidebarPanel(
          textInput("model",
-                     "Model specification"),
+                     "Model specification",
+                   value = "hw(austourists)"),
          uiOutput("state_slider")
       ),
       
@@ -97,7 +99,12 @@ server <- function(input, output, session) {
   output$model_states <- renderTable({
     if(!is.null(model_subset())){
       fit <- model_subset()
-      fit$states %>% as.data.frame %>% tail(frequency(fit$x))
+      fit$states %>% 
+        as_tibble %>%
+        mutate(t = row_number(),
+               yhat = c(NA, fitted(fit)[seq_len(NROW(fit$states) - 1)])) %>% 
+        select(t, everything()) %>%
+        tail(frequency(fit$x))
     }
   })
 }
