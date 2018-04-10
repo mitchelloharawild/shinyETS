@@ -41,7 +41,9 @@ server <- function(input, output, session) {
     if(is.null(fit)){
       return(NULL)
     }
-    sliderInput("state_len", label = "State slider", min = frequency(fit$x), max = NROW(fit$states), step=1, value = frequency(fit$x))
+    sliderInput("state_len", label = "State slider",
+                min = frequency(fit$x), max = NROW(fit$states), value = frequency(fit$x), step=1,
+                animate = TRUE)
   })
   
   estimate_model <- safely(function(model_text){
