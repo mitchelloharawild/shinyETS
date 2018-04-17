@@ -13,6 +13,7 @@ library(purrr)
 library(tidyverse)
 library(fpp2)
 
+
 # Define UI for application that draws a histogram
 ui <- fluidPage(
    
@@ -21,17 +22,28 @@ ui <- fluidPage(
    
    # Sidebar with a slider input for number of bins 
    sidebarLayout(
-      sidebarPanel(
-         textInput("model",
-                     "Model specification",
-                   value = "hw(austourists)"),
-         uiOutput("state_slider")
+      column(4,
+             wellPanel(
+               textInput("model",
+                         "Model specification",
+                         value = "hw(austourists)"),
+               uiOutput("state_slider")
+             ),
+             htmlOutput("model_out")
       ),
       
       # Show a plot of the generated distribution
-      mainPanel(
-         plotOutput("model_plot"),
-         tableOutput("model_states")
+      column(8,
+             plotOutput("model_plot"),
+             div(tableOutput("model_states"), class="state_table"),
+             tags$head(
+               tags$script("
+        $('body').on('DOMSubtreeModified', '#state_table', function() {
+alert('test');
+        });
+           ")
+               
+             )
       )
    )
 )
@@ -78,7 +90,6 @@ server <- function(input, output, session) {
   })
   
   model_fit_debounce <- model_fit %>% debounce(1000)
-  
   model_subset <- reactive({
     fit <- model_fit_debounce()
     if(is.null(fit)){
@@ -89,6 +100,12 @@ server <- function(input, output, session) {
       fit$x <- head(fit$x, input$state_len)
     }
     fit
+  })
+  
+  output$model_out <- renderUI({
+    capture.output(print(model_fit_debounce())) %>%
+      map(p) %>%
+      invoke(tagList, .)
   })
   
   output$model_plot <- renderPlot({
@@ -102,13 +119,15 @@ server <- function(input, output, session) {
       fit <- model_subset()
       fit$states %>% 
         as_tibble %>%
-        mutate(t = row_number(),
-               yhat = c(NA, fitted(fit)[seq_len(NROW(fit$states) - 1)])) %>% 
-        select(t, everything()) %>%
+        mutate(t = row_number() - 1L,
+               yhat = c(NA, fitted(fit)[seq_len(NROW(fit$states) - 1)]),
+               y = c(NA, fit$x[seq_len(NROW(fit$states) - 1)])) %>% 
+        select(t, y, everything()) %>%
         tail(pmax(3, frequency(fit$x)))
     }
   })
 }
+
 
 # Run the application 
 shinyApp(ui = ui, server = server)
